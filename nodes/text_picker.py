@@ -9,18 +9,12 @@ class RandomTextPicker:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "seed":      ("INT",    {"default": 0, "min": 0, "max": MAX_SEED}),
+                "seed":      ("INT",      {"default": 0, "min": 0, "max": MAX_SEED}),
                 "seed_mode": (SEED_MODES, {"default": "fixed"}),
             },
             "optional": {
-                "text1": ("STRING", {"forceInput": True}),
-                "text2": ("STRING", {"forceInput": True}),
-                "text3": ("STRING", {"forceInput": True}),
-                "text4": ("STRING", {"forceInput": True}),
-                "text5": ("STRING", {"forceInput": True}),
-                "text6": ("STRING", {"forceInput": True}),
-                "text7": ("STRING", {"forceInput": True}),
-                "text8": ("STRING", {"forceInput": True}),
+                # text_0 is the seed slot; JS auto-appends text_1, text_2, … as needed
+                "text_0": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -29,9 +23,9 @@ class RandomTextPicker:
     FUNCTION      = "execute"
     CATEGORY      = "tinkit/text"
     DESCRIPTION   = (
-        "Randomly picks one of up to 8 connected STRING inputs. "
-        "Only connected (non-None) slots participate. "
-        "'index' is 1-based and tells you which slot was chosen."
+        "Randomly picks one of N connected STRING inputs. "
+        "A new slot appears automatically as each is connected. "
+        "'index' is 1-based (text_0 → 1)."
     )
 
     @classmethod
@@ -40,15 +34,18 @@ class RandomTextPicker:
             return float("nan")
         return False
 
-    def execute(self, seed, seed_mode,
-                text1=None, text2=None, text3=None, text4=None,
-                text5=None, text6=None, text7=None, text8=None):
-        candidates = [
-            (i + 1, t)
-            for i, t in enumerate([text1, text2, text3, text4,
-                                    text5, text6, text7, text8])
-            if t is not None
-        ]
+    @classmethod
+    def VALIDATE_INPUTS(cls, **kwargs):
+        # Accept dynamically-added text_N inputs not listed in INPUT_TYPES
+        return True
+
+    def execute(self, seed, seed_mode, **kwargs):
+        candidates = sorted(
+            ((int(k.split("_")[1]) + 1, v)
+             for k, v in kwargs.items()
+             if k.startswith("text_") and v is not None),
+            key=lambda x: x[0],
+        )
 
         if not candidates:
             print("[RandomTextPicker] No inputs connected — returning empty string.")
@@ -62,7 +59,7 @@ class RandomTextPicker:
         rng = _random.Random(out_seed)
         idx, text = rng.choice(candidates)
 
-        print(f"[RandomTextPicker] seed={out_seed} → picked slot {idx} of {len(candidates)}")
+        print(f"[RandomTextPicker] seed={out_seed} → slot {idx} / {len(candidates)} connected")
         return (text, idx)
 
 
