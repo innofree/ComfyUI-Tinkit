@@ -42,15 +42,17 @@ class ScaledResolution:
                 "swap_dimensions": ("BOOLEAN", {"default": False,
                                                 "tooltip": "Swap width and height (portrait ↔ landscape)."}),
                 "upscale_factor":  ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
-                                                "tooltip": "Scale multiplier for scaled_width / scaled_height."}),
+                                                "tooltip": "Primary scale multiplier → scaled_width / scaled_height."}),
+                "upscale_factor2": ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
+                                                "tooltip": "Secondary scale multiplier → scaled_width2 / scaled_height2. Applied independently to base resolution."}),
                 "batch_size":      ("INT",     {"default": 1,    "min": 1,    "max": 64,              "step": 1}),
                 "seed":            ("INT",     {"default": 0,    "min": 0,    "max": MAX_SEED}),
                 "seed_mode":       (SEED_MODES, {"default": "fixed"}),
             }
         }
 
-    RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT", "LATENT")
-    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "batch_size", "seed", "latent")
+    RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT", "INT", "INT", "LATENT")
+    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "scaled_width2", "scaled_height2", "batch_size", "seed", "latent")
     FUNCTION      = "execute"
     CATEGORY      = "tinkit/resolution"
     DESCRIPTION   = (
@@ -66,7 +68,7 @@ class ScaledResolution:
         return False
 
     def execute(self, aspect_ratio, width, height, swap_dimensions,
-                upscale_factor, batch_size, seed, seed_mode):
+                upscale_factor, upscale_factor2, batch_size, seed, seed_mode):
         preset = ASPECT_RATIO_PRESETS.get(aspect_ratio)
         if preset is None and aspect_ratio != "custom":
             raise ValueError(
@@ -81,15 +83,20 @@ class ScaledResolution:
             raise ValueError(f"[ScaledResolution] width must be > 0, got {width}")
         if height <= 0:
             raise ValueError(f"[ScaledResolution] height must be > 0, got {height}")
-        if not math.isfinite(upscale_factor) or upscale_factor <= 0:
-            raise ValueError(f"[ScaledResolution] upscale_factor must be a positive finite number, got {upscale_factor}")
+        for name, val in (("upscale_factor", upscale_factor), ("upscale_factor2", upscale_factor2)):
+            if not math.isfinite(val) or val <= 0:
+                raise ValueError(f"[ScaledResolution] {name} must be a positive finite number, got {val}")
 
-        scaled_width  = int(round(width  * upscale_factor))
-        scaled_height = int(round(height * upscale_factor))
+        scaled_width   = int(round(width  * upscale_factor))
+        scaled_height  = int(round(height * upscale_factor))
+        scaled_width2  = int(round(width  * upscale_factor2))
+        scaled_height2 = int(round(height * upscale_factor2))
 
         for label, value, base, factor in (
-            ("scaled_width",  scaled_width,  width,  upscale_factor),
-            ("scaled_height", scaled_height, height, upscale_factor),
+            ("scaled_width",   scaled_width,   width,  upscale_factor),
+            ("scaled_height",  scaled_height,  height, upscale_factor),
+            ("scaled_width2",  scaled_width2,  width,  upscale_factor2),
+            ("scaled_height2", scaled_height2, height, upscale_factor2),
         ):
             if value > MAX_RESOLUTION:
                 raise ValueError(
@@ -117,7 +124,7 @@ class ScaledResolution:
         device = comfy.model_management.intermediate_device()
         latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=device)
 
-        return (width, height, scaled_width, scaled_height, batch_size, out_seed, {"samples": latent})
+        return (width, height, scaled_width, scaled_height, scaled_width2, scaled_height2, batch_size, out_seed, {"samples": latent})
 
 
 NODE_CLASS_MAPPINGS        = {"ScaledResolution": ScaledResolution}
