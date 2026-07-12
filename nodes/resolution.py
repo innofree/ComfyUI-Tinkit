@@ -19,7 +19,7 @@ ASPECT_RATIO_PRESETS = {
     "16:9 landscape 768":  (1344, 768),
     "5:8  portrait":       (640,  1024),
     "8:5  landscape":      (1024, 640),
-    "21:9 cinematic":      (1024, 436),
+    "21:9 cinematic":      (1024, 440),
     "3:4  portrait 896":   (896,  1152),
     "4:3  landscape 896":  (1152, 896),
     "1:1  square 1224":    (1224, 1224),
@@ -30,6 +30,9 @@ SEED_MODES = ["fixed", "randomize"]
 
 
 class ScaledResolution:
+    def __init__(self):
+        self.device = comfy.model_management.intermediate_device()
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -92,6 +95,16 @@ class ScaledResolution:
         # prescale: snap to nearest 8px for VAE compatibility
         width  = max(8, int(round(width  * prescale_factor / 8)) * 8)
         height = max(8, int(round(height * prescale_factor / 8)) * 8)
+        if width > MAX_RESOLUTION:
+            raise ValueError(
+                f"[ScaledResolution] prescaled width {width} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
+                f"Reduce prescale_factor ({prescale_factor}) or base width."
+            )
+        if height > MAX_RESOLUTION:
+            raise ValueError(
+                f"[ScaledResolution] prescaled height {height} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
+                f"Reduce prescale_factor ({prescale_factor}) or base height."
+            )
 
         scaled_width   = int(round(width  * upscale_factor))
         scaled_height  = int(round(height * upscale_factor))
@@ -107,12 +120,12 @@ class ScaledResolution:
             if value > MAX_RESOLUTION:
                 raise ValueError(
                     f"[ScaledResolution] {label} {value} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
-                    f"Reduce base ({base}) or upscale_factor ({factor})."
+                    f"Reduce prescale_factor ({prescale_factor}), base ({base}), or upscale_factor ({factor})."
                 )
             if value <= 0:
                 raise ValueError(
-                    f"[ScaledResolution] {label} rounded to {value}. "
-                    f"Increase base ({base}) or upscale_factor ({factor})."
+                    f"[ScaledResolution] {label} rounded to {value} — base ({base}) × factor ({factor}) is too small. "
+                    f"Increase base or upscale_factor, or raise prescale_factor ({prescale_factor})."
                 )
 
         if batch_size < 1:
@@ -127,8 +140,7 @@ class ScaledResolution:
         else:
             raise ValueError(f"[ScaledResolution] Unknown seed_mode '{seed_mode}'. Valid: {SEED_MODES}")
 
-        device = comfy.model_management.intermediate_device()
-        latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=device)
+        latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=self.device)
 
         return (width, height, scaled_width, scaled_height, scaled_width2, scaled_height2, batch_size, out_seed, {"samples": latent})
 
