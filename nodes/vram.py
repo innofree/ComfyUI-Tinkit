@@ -1,4 +1,5 @@
 import torch
+import comfy.model_management
 
 
 class VRAMMonitor:
@@ -32,12 +33,10 @@ class VRAMMonitor:
             return {"ui": {"text": ["CUDA not available"]},
                     "result": (model, 0.0, 0.0, 0.0)}
 
-        # Prefer the device the model's parameters live on; fall back to cuda:0
-        device = torch.device("cuda:0")
-        try:
-            device = next(model.model.parameters()).device
-        except (AttributeError, StopIteration):
-            pass
+        # Always use the active CUDA device — model params may be on CPU (offloaded)
+        device = comfy.model_management.get_torch_device()
+        if not device.type.startswith("cuda"):
+            device = torch.device("cuda:0")
 
         props     = torch.cuda.get_device_properties(device)
         total     = props.total_memory
