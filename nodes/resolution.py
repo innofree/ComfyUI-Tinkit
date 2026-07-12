@@ -46,7 +46,7 @@ class ScaledResolution:
                                                 "tooltip": "Used only when aspect_ratio is 'custom' — ignored for all presets."}),
                 "swap_dimensions":  ("BOOLEAN", {"default": False,
                                                  "tooltip": "Swap width ↔ height after preset/custom selection (portrait ↔ landscape)."}),
-                "prescale_factor":  ("FLOAT",   {"default": 1.0,  "min": 0.01, "max": 8.0,   "step": 0.01,
+                "prescale_factor":  ("FLOAT",   {"default": 1,    "min": 0.01, "max": 8.0,   "step": 0.01,
                                                  "tooltip": "Scales base W×H before upscale factors; result snapped to nearest 8px. <1.0 = draft/test, >1.0 = boost."}),
                 "upscale_factor":   ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
                                                  "tooltip": "Primary upscale multiplier → scaled_width / scaled_height."}),
