@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 _VALID_KEYS = {"date", "model", "seed", "prefix", "suffix", "index"}
+_KEY_PATTERN = re.compile(r'%(\w+)%')
 
 
 class FilenameFormatter:
@@ -10,8 +11,8 @@ class FilenameFormatter:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "template":    ("STRING",  {"default": "{date}-{model}-{seed}", "multiline": False,
-                                            "tooltip": "Keys: {date} {model} {seed} {prefix} {suffix} {index}"}),
+                "template":    ("STRING",  {"default": "image/%date%/%model%-seed%seed%", "multiline": False,
+                                            "tooltip": "Variables: %date% %model% %seed% %prefix% %suffix% %index%  |  Use / for subfolders."}),
                 "seed":        ("INT",     {"default": 0, "min": 0, "max": 2**32 - 1}),
             },
             "optional": {
@@ -19,8 +20,8 @@ class FilenameFormatter:
                 "prefix":      ("STRING",  {"default": ""}),
                 "suffix":      ("STRING",  {"default": ""}),
                 "index":       ("INT",     {"default": 0, "min": 0, "max": 99999}),
-                "date_format": ("STRING",  {"default": "%Y%m%d",
-                                            "tooltip": "strftime format string, e.g. %Y%m%d_%H%M%S"}),
+                "date_format": ("STRING",  {"default": "%Y-%m-%d",
+                                            "tooltip": "strftime format, e.g. %Y-%m-%d or %Y%m%d_%H%M%S"}),
             },
         }
 
@@ -29,12 +30,13 @@ class FilenameFormatter:
     FUNCTION      = "execute"
     CATEGORY      = "tinkit/io"
     DESCRIPTION   = (
-        "Formats a filename string from a template. "
-        "Available keys: {date}, {model}, {seed}, {prefix}, {suffix}, {index}."
+        "Formats a filename/path from a template using %variable% syntax. "
+        "Variables: %date%, %model%, %seed%, %prefix%, %suffix%, %index%.  "
+        "Use / in the template to create subfolders (e.g. image/%date%/%model%-seed%seed%)."
     )
 
     def execute(self, template, seed, model_name="", prefix="", suffix="",
-                index=0, date_format="%Y%m%d"):
+                index=0, date_format="%Y-%m-%d"):
         try:
             date_str = datetime.now().strftime(date_format)
         except Exception as e:
@@ -42,26 +44,36 @@ class FilenameFormatter:
 
         model_base = os.path.splitext(os.path.basename(model_name))[0] if model_name else "model"
 
+        values = {
+            "date":   date_str,
+            "model":  model_base,
+            "seed":   str(seed),
+            "prefix": prefix,
+            "suffix": suffix,
+            "index":  str(index),
+        }
+
+        def _replace(m):
+            key = m.group(1).lower()
+            if key not in _VALID_KEYS:
+                valid = "  ".join(f"%{k}%" for k in sorted(_VALID_KEYS))
+                raise ValueError(
+                    f"[FilenameFormatter] Unknown variable '%{m.group(1)}%'. "
+                    f"Valid: {valid}"
+                )
+            return values[key]
+
         try:
-            result = template.format(
-                date=date_str,
-                model=model_base,
-                seed=seed,
-                prefix=prefix,
-                suffix=suffix,
-                index=index,
-            )
-        except KeyError as e:
-            raise ValueError(
-                f"[FilenameFormatter] Unknown template key {e}. "
-                f"Valid keys: {{{', '.join(sorted(_VALID_KEYS))}}}"
-            )
+            result = _KEY_PATTERN.sub(_replace, template)
+        except ValueError:
+            raise
         except Exception as e:
             raise ValueError(f"[FilenameFormatter] Template error: {e}")
 
-        # Strip characters invalid in most filesystems
-        result = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', result)
-        result = result.strip('. ')
+        # Sanitize per-segment (allow / as subfolder separator, strip OS-invalid chars)
+        segments = result.split("/")
+        segments = [re.sub(r'[<>:"|?*\\\x00-\x1f]', '_', s).strip('. ') for s in segments]
+        result = "/".join(s for s in segments if s)
 
         if not result:
             raise ValueError("[FilenameFormatter] Template produced an empty filename after sanitization.")
