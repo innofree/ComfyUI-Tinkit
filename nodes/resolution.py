@@ -6,25 +6,27 @@ import comfy.model_management
 MAX_RESOLUTION = 32768
 MAX_SEED = 2**32 - 1
 
+# Preset keys embed exact W×H and target model family for at-a-glance UX.
+# Rename note: old names (e.g. "3:2  landscape 832") map to the new equivalents below.
 ASPECT_RATIO_PRESETS = {
-    "custom":              None,
-    "1:1   1024×1024":     (1024, 1024),
-    "3:4    768×1024":     (768,  1024),
-    "4:3   1024×768":      (1024, 768),
-    "2:3    832×1216":     (832,  1216),
-    "3:2   1216×832":      (1216, 832),
-    "9:16   576×1024":     (576,  1024),
-    "16:9  1024×576":      (1024, 576),
-    "9:16   768×1344":     (768,  1344),
-    "16:9  1344×768":      (1344, 768),
-    "5:8    640×1024":     (640,  1024),
-    "8:5   1024×640":      (1024, 640),
-    "21:9  1024×440":      (1024, 440),
-    "3:4    896×1152":     (896,  1152),
-    "4:3   1152×896":      (1152, 896),
-    "1:1   1224×1224":     (1224, 1224),
-    "3:4   1224×1632":     (1224, 1632),
-    "4:3   1632×1224":     (1632, 1224),
+    "custom":                            None,
+    "1:1  square   1024×1024  SDXL":    (1024, 1024),
+    "3:4  portrait  768×1024  SDXL":    (768,  1024),
+    "4:3  landscape 1024×768  SDXL":    (1024, 768),
+    "2:3  portrait  832×1216  SDXL":    (832,  1216),
+    "3:2  landscape 1216×832  SDXL":    (1216, 832),
+    "9:16 portrait  576×1024  SDXL":    (576,  1024),
+    "16:9 landscape 1024×576  SDXL":    (1024, 576),
+    "9:16 portrait  768×1344  SDXL":    (768,  1344),
+    "16:9 landscape 1344×768  SDXL":    (1344, 768),
+    "5:8  portrait  640×1024  SDXL":    (640,  1024),
+    "8:5  landscape 1024×640  SDXL":    (1024, 640),
+    "21:9 cinematic 1024×440  SDXL":    (1024, 440),
+    "3:4  portrait  896×1152  SDXL":    (896,  1152),
+    "4:3  landscape 1152×896  SDXL":    (1152, 896),
+    "1:1  square   1224×1224  Flux":    (1224, 1224),
+    "3:4  portrait 1224×1632  Flux":    (1224, 1632),
+    "4:3  landscape 1632×1224  Flux":   (1632, 1224),
 }
 SEED_MODES = ["fixed", "randomize"]
 
@@ -39,31 +41,35 @@ class ScaledResolution:
             "required": {
                 "aspect_ratio":    (list(ASPECT_RATIO_PRESETS.keys()),),
                 "width":           ("INT",     {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
-                                                "tooltip": "⚠ Active only when aspect_ratio = 'custom'. Ignored for all presets."}),
+                                                "tooltip": "Used only when aspect_ratio is 'custom' — ignored for all presets."}),
                 "height":          ("INT",     {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
-                                                "tooltip": "⚠ Active only when aspect_ratio = 'custom'. Ignored for all presets."}),
+                                                "tooltip": "Used only when aspect_ratio is 'custom' — ignored for all presets."}),
                 "swap_dimensions":  ("BOOLEAN", {"default": False,
-                                                 "tooltip": "Swap width and height (portrait ↔ landscape)."}),
-                "prescale_factor":  ("FLOAT",   {"default": 1.0,  "min": 0.01, "max": 8.0,            "step": 0.01,
-                                                 "tooltip": "Multiplied into base resolution first (before upscale factors). Rounded to nearest 8px. Use <1.0 to test at lower res, >1.0 to boost base."}),
-                "upscale_factor":   ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
-                                                 "tooltip": "Primary scale multiplier applied to prescaled base → scaled_width / scaled_height."}),
-                "upscale_factor2":  ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
-                                                 "tooltip": "Secondary scale multiplier applied to prescaled base → scaled_width2 / scaled_height2."}),
-                "batch_size":      ("INT",     {"default": 1,    "min": 1,    "max": 64,              "step": 1}),
+                                                 "tooltip": "Swap width ↔ height after preset/custom selection (portrait ↔ landscape)."}),
+                "prescale_factor":  ("FLOAT",   {"default": 1.0,  "min": 0.01, "max": 8.0,   "step": 0.01,
+                                                 "tooltip": "Scales base W×H before upscale factors; result snapped to nearest 8px. <1.0 = draft/test, >1.0 = boost."}),
+                "upscale_factor":   ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
+                                                 "tooltip": "Primary upscale multiplier → scaled_width / scaled_height."}),
+                "upscale_factor2":  ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
+                                                 "tooltip": "Secondary upscale multiplier → scaled_width2 / scaled_height2."}),
+                "batch_size":      ("INT",     {"default": 1,    "min": 1,    "max": 64,     "step": 1}),
                 "seed":            ("INT",     {"default": 0,    "min": 0,    "max": MAX_SEED}),
                 "seed_mode":       (SEED_MODES, {"default": "fixed"}),
             }
         }
 
     RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT", "INT", "INT", "LATENT")
-    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "scaled_width2", "scaled_height2", "batch_size", "seed", "latent")
+    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height",
+                     "scaled_width2", "scaled_height2", "batch_size", "seed", "latent")
+    OUTPUT_NODE   = True
     FUNCTION      = "execute"
     CATEGORY      = "tinkit/resolution"
     DESCRIPTION   = (
-        "All-in-one resolution node. Selects a preset aspect ratio (or custom W×H), "
-        "prescale_factor scales the base first (snapped to 8px), then upscale_factor / upscale_factor2 "
-        "produce two independent scaled outputs. Also emits an empty latent — replacing EmptyLatentImage."
+        "All-in-one resolution node. Preset names show exact W×H and target model family (SDXL/Flux). "
+        "width/height inputs are only used when 'custom' is selected. "
+        "prescale_factor scales the base first (snapped to 8px); "
+        "upscale_factor / upscale_factor2 produce two independent HiRes outputs. "
+        "Emits an empty latent, replacing EmptyLatentImage."
     )
 
     @classmethod
@@ -88,44 +94,40 @@ class ScaledResolution:
             raise ValueError(f"[ScaledResolution] width must be > 0, got {width}")
         if height <= 0:
             raise ValueError(f"[ScaledResolution] height must be > 0, got {height}")
-        for name, val in (("prescale_factor", prescale_factor), ("upscale_factor", upscale_factor), ("upscale_factor2", upscale_factor2)):
+        for name, val in (("prescale_factor", prescale_factor),
+                          ("upscale_factor", upscale_factor),
+                          ("upscale_factor2", upscale_factor2)):
             if not math.isfinite(val) or val <= 0:
-                raise ValueError(f"[ScaledResolution] {name} must be a positive finite number, got {val}")
+                raise ValueError(f"[ScaledResolution] {name} must be positive and finite, got {val}")
 
         # prescale: snap to nearest 8px for VAE compatibility
         width  = max(8, int(round(width  * prescale_factor / 8)) * 8)
         height = max(8, int(round(height * prescale_factor / 8)) * 8)
         if width > MAX_RESOLUTION:
-            raise ValueError(
-                f"[ScaledResolution] prescaled width {width} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
-                f"Reduce prescale_factor ({prescale_factor}) or base width."
-            )
+            raise ValueError(f"[ScaledResolution] prescaled width {width} exceeds MAX_RESOLUTION {MAX_RESOLUTION}.")
         if height > MAX_RESOLUTION:
-            raise ValueError(
-                f"[ScaledResolution] prescaled height {height} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
-                f"Reduce prescale_factor ({prescale_factor}) or base height."
-            )
+            raise ValueError(f"[ScaledResolution] prescaled height {height} exceeds MAX_RESOLUTION {MAX_RESOLUTION}.")
 
         scaled_width   = int(round(width  * upscale_factor))
         scaled_height  = int(round(height * upscale_factor))
         scaled_width2  = int(round(width  * upscale_factor2))
         scaled_height2 = int(round(height * upscale_factor2))
 
-        for label, value, base, factor in (
+        for lbl, val, base, factor in (
             ("scaled_width",   scaled_width,   width,  upscale_factor),
             ("scaled_height",  scaled_height,  height, upscale_factor),
             ("scaled_width2",  scaled_width2,  width,  upscale_factor2),
             ("scaled_height2", scaled_height2, height, upscale_factor2),
         ):
-            if value > MAX_RESOLUTION:
+            if val > MAX_RESOLUTION:
                 raise ValueError(
-                    f"[ScaledResolution] {label} {value} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
-                    f"Reduce prescale_factor ({prescale_factor}), base ({base}), or upscale_factor ({factor})."
+                    f"[ScaledResolution] {lbl} {val} exceeds MAX_RESOLUTION {MAX_RESOLUTION}. "
+                    f"Reduce prescale_factor ({prescale_factor}), base ({base}), or factor ({factor})."
                 )
-            if value <= 0:
+            if val <= 0:
                 raise ValueError(
-                    f"[ScaledResolution] {label} rounded to {value} — base ({base}) × factor ({factor}) is too small. "
-                    f"Increase base or upscale_factor, or raise prescale_factor ({prescale_factor})."
+                    f"[ScaledResolution] {lbl} rounded to {val}. "
+                    f"Increase base ({base}) or upscale_factor ({factor})."
                 )
 
         if batch_size < 1:
@@ -142,7 +144,25 @@ class ScaledResolution:
 
         latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=self.device)
 
-        return (width, height, scaled_width, scaled_height, scaled_width2, scaled_height2, batch_size, out_seed, {"samples": latent})
+        # Build node preview display — shown in the node's output area after each execution
+        std   = aspect_ratio.split()[-1] if aspect_ratio != "custom" else "custom"
+        pre   = f"  (prescale ×{prescale_factor})" if prescale_factor != 1.0 else ""
+        label = (
+            f"base  {width} × {height}  [{std}]{pre}\n"
+            f"×{upscale_factor}  →  {scaled_width} × {scaled_height}\n"
+            f"×{upscale_factor2}  →  {scaled_width2} × {scaled_height2}"
+        )
+
+        return {
+            "ui": {"text": [label]},
+            "result": (
+                width, height,
+                scaled_width, scaled_height,
+                scaled_width2, scaled_height2,
+                batch_size, out_seed,
+                {"samples": latent},
+            ),
+        }
 
 
 NODE_CLASS_MAPPINGS        = {"ScaledResolution": ScaledResolution}
