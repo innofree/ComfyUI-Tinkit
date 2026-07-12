@@ -5,6 +5,7 @@ from .attention     import NODE_CLASS_MAPPINGS as _A,  NODE_DISPLAY_NAME_MAPPING
 from .model_info    import NODE_CLASS_MAPPINGS as _M,  NODE_DISPLAY_NAME_MAPPINGS as _MD
 from .seed          import NODE_CLASS_MAPPINGS as _S,  NODE_DISPLAY_NAME_MAPPINGS as _SD
 from .prompt_saver  import NODE_CLASS_MAPPINGS as _PS, NODE_DISPLAY_NAME_MAPPINGS as _PSD
+from .text_picker   import NODE_CLASS_MAPPINGS as _TP, NODE_DISPLAY_NAME_MAPPINGS as _TPD
 
-NODE_CLASS_MAPPINGS = {**_R, **_F, **_V, **_A, **_M, **_S, **_PS}
-NODE_DISPLAY_NAME_MAPPINGS = {**_RD, **_FD, **_VD, **_AD, **_MD, **_SD, **_PSD}
+NODE_CLASS_MAPPINGS = {**_R, **_F, **_V, **_A, **_M, **_S, **_PS, **_TP}
+NODE_DISPLAY_NAME_MAPPINGS = {**_RD, **_FD, **_VD, **_AD, **_MD, **_SD, **_PSD, **_TPD}
