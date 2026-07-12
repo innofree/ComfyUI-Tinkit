@@ -1,0 +1,14 @@
+# comfyui-workflow-utils
+#
+# All core dependencies (torch, numpy, etc.) are provided by the ComfyUI
+# environment. This file lists OPTIONAL packages that unlock additional features.
+#
+# Install the one that matches your GPU:
+#
+#   SM 12.0+ (Blackwell — RTX 50xx, RTX PRO 5000):
+#     pip install sageattn3
+#
+#   SM 7.5–11.x (Turing / Ampere / Ada Lovelace — RTX 20xx–40xx):
+#     pip install sageattention
+#
+# Without either, Attention Auto-Select falls back to PyTorch default SDPA.
