@@ -39,12 +39,14 @@ class ScaledResolution:
                                                 "tooltip": "Used only when aspect_ratio is 'custom'."}),
                 "height":          ("INT",     {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
                                                 "tooltip": "Used only when aspect_ratio is 'custom'."}),
-                "swap_dimensions": ("BOOLEAN", {"default": False,
-                                                "tooltip": "Swap width and height (portrait ↔ landscape)."}),
-                "upscale_factor":  ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
-                                                "tooltip": "Primary scale multiplier → scaled_width / scaled_height."}),
-                "upscale_factor2": ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
-                                                "tooltip": "Secondary scale multiplier → scaled_width2 / scaled_height2. Applied independently to base resolution."}),
+                "swap_dimensions":  ("BOOLEAN", {"default": False,
+                                                 "tooltip": "Swap width and height (portrait ↔ landscape)."}),
+                "prescale_factor":  ("FLOAT",   {"default": 1.0,  "min": 0.01, "max": 8.0,            "step": 0.01,
+                                                 "tooltip": "Multiplied into base resolution first (before upscale factors). Rounded to nearest 8px. Use <1.0 to test at lower res, >1.0 to boost base."}),
+                "upscale_factor":   ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
+                                                 "tooltip": "Primary scale multiplier applied to prescaled base → scaled_width / scaled_height."}),
+                "upscale_factor2":  ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,           "step": 0.01,
+                                                 "tooltip": "Secondary scale multiplier applied to prescaled base → scaled_width2 / scaled_height2."}),
                 "batch_size":      ("INT",     {"default": 1,    "min": 1,    "max": 64,              "step": 1}),
                 "seed":            ("INT",     {"default": 0,    "min": 0,    "max": MAX_SEED}),
                 "seed_mode":       (SEED_MODES, {"default": "fixed"}),
@@ -57,8 +59,8 @@ class ScaledResolution:
     CATEGORY      = "tinkit/resolution"
     DESCRIPTION   = (
         "All-in-one resolution node. Selects a preset aspect ratio (or custom W×H), "
-        "computes upscaler target dims (width×upscale_factor), forwards batch_size and seed, "
-        "and emits an empty latent — replacing EmptyLatentImage."
+        "prescale_factor scales the base first (snapped to 8px), then upscale_factor / upscale_factor2 "
+        "produce two independent scaled outputs. Also emits an empty latent — replacing EmptyLatentImage."
     )
 
     @classmethod
@@ -68,7 +70,7 @@ class ScaledResolution:
         return False
 
     def execute(self, aspect_ratio, width, height, swap_dimensions,
-                upscale_factor, upscale_factor2, batch_size, seed, seed_mode):
+                prescale_factor, upscale_factor, upscale_factor2, batch_size, seed, seed_mode):
         preset = ASPECT_RATIO_PRESETS.get(aspect_ratio)
         if preset is None and aspect_ratio != "custom":
             raise ValueError(
@@ -83,9 +85,13 @@ class ScaledResolution:
             raise ValueError(f"[ScaledResolution] width must be > 0, got {width}")
         if height <= 0:
             raise ValueError(f"[ScaledResolution] height must be > 0, got {height}")
-        for name, val in (("upscale_factor", upscale_factor), ("upscale_factor2", upscale_factor2)):
+        for name, val in (("prescale_factor", prescale_factor), ("upscale_factor", upscale_factor), ("upscale_factor2", upscale_factor2)):
             if not math.isfinite(val) or val <= 0:
                 raise ValueError(f"[ScaledResolution] {name} must be a positive finite number, got {val}")
+
+        # prescale: snap to nearest 8px for VAE compatibility
+        width  = max(8, int(round(width  * prescale_factor / 8)) * 8)
+        height = max(8, int(round(height * prescale_factor / 8)) * 8)
 
         scaled_width   = int(round(width  * upscale_factor))
         scaled_height  = int(round(height * upscale_factor))
