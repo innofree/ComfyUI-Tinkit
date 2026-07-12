@@ -1,5 +1,4 @@
 import torch
-import comfy.model_management
 
 
 class VRAMMonitor:
@@ -28,25 +27,30 @@ class VRAMMonitor:
     )
 
     def execute(self, model, warn_threshold_pct=90.0):
-        if not torch.cuda.is_available():
+        try:
+            return self._measure(model, warn_threshold_pct)
+        except Exception as exc:
+            msg = f"VRAMMonitor error: {exc}"
+            print(f"[VRAMMonitor] {msg}")
+            return {"ui": {"text": [msg]}, "result": (model, 0.0, 0.0, 0.0)}
+
+    def _measure(self, model, warn_threshold_pct):
+        if not torch.cuda.is_available() or torch.cuda.device_count() == 0:
             print("[VRAMMonitor] CUDA not available — returning zeros.")
-            return {"ui": {"text": ["CUDA not available"]},
-                    "result": (model, 0.0, 0.0, 0.0)}
+            return {"ui": {"text": ["CUDA not available"]}, "result": (model, 0.0, 0.0, 0.0)}
 
-        # Always use the active CUDA device — model params may be on CPU (offloaded)
-        device = comfy.model_management.get_torch_device()
-        if not device.type.startswith("cuda"):
-            device = torch.device("cuda:0")
+        # Use integer device index — always valid for CUDA, regardless of model offload state
+        idx   = torch.cuda.current_device()
+        props = torch.cuda.get_device_properties(idx)
 
-        props     = torch.cuda.get_device_properties(device)
-        total     = props.total_memory
-        reserved  = torch.cuda.memory_reserved(device)
-        free      = total - reserved
+        total    = props.total_memory
+        reserved = torch.cuda.memory_reserved(idx)
+        free     = total - reserved
 
-        used_gb = reserved / 1024 ** 3
-        free_gb = free    / 1024 ** 3
-        total_gb = total  / 1024 ** 3
-        pct     = (reserved / total) * 100.0
+        used_gb  = reserved / 1024 ** 3
+        free_gb  = free    / 1024 ** 3
+        total_gb = total   / 1024 ** 3
+        pct      = (reserved / total) * 100.0
 
         msg = (
             f"VRAM [{props.name}]: "
