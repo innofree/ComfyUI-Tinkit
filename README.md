@@ -1,5 +1,7 @@
 # ComfyUI-Tinkit
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A collection of utility nodes for ComfyUI workflows, focused on resolution management, attention optimization, monitoring, and seed tracking.
 
 Tested on: **RTX PRO 5000 Blackwell (SM 12.0a, 48 GB)** / ComfyUI latest / Python 3.13
