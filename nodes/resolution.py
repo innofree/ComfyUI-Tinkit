@@ -1,5 +1,7 @@
 import math
 import random
+import torch
+import comfy.model_management
 
 MAX_RESOLUTION = 32768
 MAX_SEED = 2**32 - 1
@@ -47,13 +49,14 @@ class ScaledResolution:
             }
         }
 
-    RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT")
-    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "batch_size", "seed")
+    RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT", "LATENT")
+    RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "batch_size", "seed", "latent")
     FUNCTION      = "execute"
     CATEGORY      = "tinkit/resolution"
     DESCRIPTION   = (
         "All-in-one resolution node. Selects a preset aspect ratio (or custom W×H), "
-        "computes upscaler target dims (width×upscale_factor), and forwards batch_size and seed."
+        "computes upscaler target dims (width×upscale_factor), forwards batch_size and seed, "
+        "and emits an empty latent — replacing EmptyLatentImage."
     )
 
     @classmethod
@@ -111,7 +114,10 @@ class ScaledResolution:
         else:
             raise ValueError(f"[ScaledResolution] Unknown seed_mode '{seed_mode}'. Valid: {SEED_MODES}")
 
-        return (width, height, scaled_width, scaled_height, batch_size, out_seed)
+        device = comfy.model_management.intermediate_device()
+        latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=device)
+
+        return (width, height, scaled_width, scaled_height, batch_size, out_seed, {"samples": latent})
 
 
 NODE_CLASS_MAPPINGS        = {"ScaledResolution": ScaledResolution}
