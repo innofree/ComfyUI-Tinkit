@@ -40,21 +40,21 @@ class ScaledResolution:
         return {
             "required": {
                 "aspect_ratio":    (list(ASPECT_RATIO_PRESETS.keys()),),
-                "width":           ("INT",     {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
-                                                "tooltip": "Used only when aspect_ratio is 'custom' — ignored for all presets."}),
-                "height":          ("INT",     {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
-                                                "tooltip": "Used only when aspect_ratio is 'custom' — ignored for all presets."}),
-                "swap_dimensions":  ("BOOLEAN", {"default": False,
-                                                 "tooltip": "Swap width ↔ height after preset/custom selection (portrait ↔ landscape)."}),
-                "prescale_factor":  ("FLOAT",   {"default": 1,    "min": 0.01, "max": 8.0,   "step": 0.01,
-                                                 "tooltip": "Scales base W×H before upscale factors; result snapped to nearest 8px. <1.0 = draft/test, >1.0 = boost."}),
-                "upscale_factor":   ("FLOAT",   {"default": 4.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
-                                                 "tooltip": "Primary upscale multiplier → scaled_width / scaled_height."}),
-                "upscale_factor2":  ("FLOAT",   {"default": 2.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
-                                                 "tooltip": "Secondary upscale multiplier → scaled_width2 / scaled_height2."}),
-                "batch_size":      ("INT",     {"default": 1,    "min": 1,    "max": 64,     "step": 1}),
-                "seed":            ("INT",     {"default": 0,    "min": 0,    "max": MAX_SEED}),
+                "width":           ("INT",   {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
+                                              "tooltip": "Used only when aspect_ratio is 'custom'."}),
+                "height":          ("INT",   {"default": 1024, "min": 1,    "max": MAX_RESOLUTION, "step": 8,
+                                              "tooltip": "Used only when aspect_ratio is 'custom'."}),
+                "prescale_factor": ("FLOAT", {"default": 1.0,  "min": 0.01, "max": 8.0,   "step": 0.01,
+                                              "tooltip": "Scales base W×H before upscale factors; snapped to 8px."}),
+                "upscale_factor":  ("FLOAT", {"default": 4.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
+                                              "tooltip": "Primary upscale multiplier → scaled_width / scaled_height."}),
+                "upscale_factor2": ("FLOAT", {"default": 2.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
+                                              "tooltip": "Secondary upscale multiplier → scaled_width2 / scaled_height2."}),
+                "batch_size":      ("INT",   {"default": 1,    "min": 1,    "max": 64,     "step": 1}),
+                "seed":            ("INT",   {"default": 0,    "min": 0,    "max": MAX_SEED}),
                 "seed_mode":       (SEED_MODES, {"default": "fixed"}),
+                "swap_dimensions": ("BOOLEAN", {"default": False,
+                                                "tooltip": "Swap width ↔ height (portrait ↔ landscape)."}),
             }
         }
 
@@ -78,8 +78,9 @@ class ScaledResolution:
             return float("nan")
         return False
 
-    def execute(self, aspect_ratio, width, height, swap_dimensions,
-                prescale_factor, upscale_factor, upscale_factor2, batch_size, seed, seed_mode):
+    def execute(self, aspect_ratio, width, height,
+                prescale_factor, upscale_factor, upscale_factor2, batch_size, seed, seed_mode,
+                swap_dimensions):
         preset = ASPECT_RATIO_PRESETS.get(aspect_ratio)
         if preset is None and aspect_ratio != "custom":
             raise ValueError(
