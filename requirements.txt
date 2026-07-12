@@ -1,4 +1,4 @@
-# comfyui-workflow-utils
+# ComfyUI-Tinkit
 #
 # All core dependencies (torch, numpy, etc.) are provided by the ComfyUI
 # environment. This file lists OPTIONAL packages that unlock additional features.

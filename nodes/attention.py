@@ -67,7 +67,7 @@ class AttentionAutoSelect:
     RETURN_NAMES  = ("model",  "backend_info")
     OUTPUT_NODE   = True
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/optimization"
+    CATEGORY      = "tinkit/optimization"
     DESCRIPTION   = (
         "Automatically selects the fastest available attention backend for the current GPU: "
         "sageattn3 for SM12+ (Blackwell), sageattn for Ada/Ampere (SM7.5+), "

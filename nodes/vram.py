@@ -20,7 +20,7 @@ class VRAMMonitor:
     RETURN_NAMES  = ("model",  "vram_used_gb", "vram_free_gb", "vram_pct")
     OUTPUT_NODE   = True
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/monitoring"
+    CATEGORY      = "tinkit/monitoring"
     DESCRIPTION   = (
         "Passes the model through unchanged and reports current VRAM usage. "
         "Wire anywhere in a model chain to sample stats at that point in the graph."

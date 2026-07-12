@@ -31,7 +31,7 @@ class ModelNameExtractor:
     RETURN_TYPES  = ("MODEL", "STRING")
     RETURN_NAMES  = ("model",  "model_name")
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/model"
+    CATEGORY      = "tinkit/model"
     DESCRIPTION   = (
         "Extracts the bare filename (no path, no extension) from a model path string "
         "and passes the model through unchanged."

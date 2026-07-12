@@ -1,4 +1,4 @@
-# AGENTS.md — comfyui-workflow-utils
+# AGENTS.md — ComfyUI-Tinkit
 
 Guidelines for AI coding agents (Claude Code, Copilot, etc.) working in this package.
 
@@ -29,7 +29,7 @@ class MyNode:
     RETURN_TYPES  = ("INT",)
     RETURN_NAMES  = ("result",)
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/<subcategory>"
+    CATEGORY      = "tinkit/<subcategory>"
 
     def execute(self, x):
         return (x,)
@@ -130,7 +130,7 @@ return (model_clone,)
 ComfyUI has no built-in test runner. Validate import correctness without starting the server:
 
 ```bash
-cd ComfyUI/custom_nodes/comfyui-workflow-utils
+cd ComfyUI/custom_nodes/ComfyUI-Tinkit
 python -c "
 import sys; sys.path.insert(0, '.')
 from nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS

@@ -27,7 +27,7 @@ class FilenameFormatter:
     RETURN_TYPES  = ("STRING",)
     RETURN_NAMES  = ("filename",)
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/io"
+    CATEGORY      = "tinkit/io"
     DESCRIPTION   = (
         "Formats a filename string from a template. "
         "Available keys: {date}, {model}, {seed}, {prefix}, {suffix}, {index}."

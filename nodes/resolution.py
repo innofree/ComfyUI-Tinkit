@@ -50,7 +50,7 @@ class ScaledResolution:
     RETURN_TYPES  = ("INT", "INT", "INT", "INT", "INT", "INT")
     RETURN_NAMES  = ("width", "height", "scaled_width", "scaled_height", "batch_size", "seed")
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/resolution"
+    CATEGORY      = "tinkit/resolution"
     DESCRIPTION   = (
         "All-in-one resolution node. Selects a preset aspect ratio (or custom W×H), "
         "computes upscaler target dims (width×upscale_factor), and forwards batch_size and seed."

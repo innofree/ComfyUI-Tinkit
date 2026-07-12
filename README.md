@@ -1,4 +1,4 @@
-# comfyui-workflow-utils
+# ComfyUI-Tinkit
 
 A collection of utility nodes for ComfyUI workflows, focused on resolution management, attention optimization, monitoring, and seed tracking.
 
@@ -9,7 +9,7 @@ Tested on: **RTX PRO 5000 Blackwell (SM 12.0a, 48 GB)** / ComfyUI latest / Pytho
 ## Nodes
 
 ### Scaled Resolution
-**Category:** `workflow-utils/resolution`
+**Category:** `tinkit/resolution`
 
 All-in-one replacement for the common 5-node resolution setup
 (`PrimitiveInt × 2` + `MathExpression × 2` + `EmptyLatentImage`).
@@ -36,7 +36,7 @@ All-in-one replacement for the common 5-node resolution setup
 ---
 
 ### Filename Formatter
-**Category:** `workflow-utils/io`
+**Category:** `tinkit/io`
 
 Builds a sanitized filename string from a template. Useful as input to Image Saver nodes.
 
@@ -58,7 +58,7 @@ Builds a sanitized filename string from a template. Useful as input to Image Sav
 ---
 
 ### VRAM Monitor
-**Category:** `workflow-utils/monitoring`
+**Category:** `tinkit/monitoring`
 
 Passes a model through unchanged and reports current GPU VRAM usage. Wire anywhere in a model chain to sample stats at that point in the graph.
 
@@ -79,7 +79,7 @@ Stats are also displayed in the node's UI text widget during execution.
 ---
 
 ### Attention Auto-Select
-**Category:** `workflow-utils/optimization`
+**Category:** `tinkit/optimization`
 
 Detects the current GPU's compute capability and patches the model's attention mechanism with the fastest available backend.
 
@@ -108,7 +108,7 @@ Patches via `model_options["transformer_options"]["optimized_attention_override"
 ---
 
 ### Model Name Extractor
-**Category:** `workflow-utils/model`
+**Category:** `tinkit/model`
 
 Extracts the bare filename (no path, no extension) from a model path string and passes the model through unchanged.
 
@@ -127,7 +127,7 @@ Extracts the bare filename (no path, no extension) from a model path string and 
 ---
 
 ### Seed History
-**Category:** `workflow-utils/seed`
+**Category:** `tinkit/seed`
 
 Records every seed used across successive queue runs (in-process, resets on ComfyUI restart). Useful for re-generating a specific image when using randomized seeds.
 
@@ -170,7 +170,7 @@ Always re-executes every queue cycle so history is always up to date.
 Manual (already installed if you're reading this):
 ```bash
 cd ComfyUI/custom_nodes
-git clone <this-repo> comfyui-workflow-utils
+git clone <this-repo> ComfyUI-Tinkit
 # restart ComfyUI
 ```
 
@@ -181,7 +181,7 @@ No pip dependencies beyond what ComfyUI already requires. `sageattn3` / `sageatt
 ## File Structure
 
 ```
-comfyui-workflow-utils/
+ComfyUI-Tinkit/
   __init__.py               # re-exports NODE_CLASS_MAPPINGS
   nodes/
     __init__.py             # aggregates all node modules

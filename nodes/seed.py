@@ -32,7 +32,7 @@ class SeedHistory:
     RETURN_NAMES  = ("seed", "prev_seed", "prev2_seed", "history")
     OUTPUT_NODE   = True
     FUNCTION      = "execute"
-    CATEGORY      = "workflow-utils/seed"
+    CATEGORY      = "tinkit/seed"
     DESCRIPTION   = (
         "Records the incoming seed into a persistent per-session history. "
         "Outputs the current seed, the previous seed, the seed before that, "
