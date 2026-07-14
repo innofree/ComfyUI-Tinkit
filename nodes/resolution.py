@@ -1,5 +1,4 @@
 import math
-import random
 import torch
 import comfy.model_management
 
@@ -28,7 +27,6 @@ ASPECT_RATIO_PRESETS = {
     "3:4  portrait 1224×1632  Flux":    (1224, 1632),
     "4:3  landscape 1632×1224  Flux":   (1632, 1224),
 }
-SEED_MODES = ["fixed", "randomize"]
 
 
 class ScaledResolution:
@@ -51,8 +49,9 @@ class ScaledResolution:
                 "upscale_factor2": ("FLOAT", {"default": 2.0,  "min": 0.01, "max": 64.0,  "step": 0.01,
                                               "tooltip": "Secondary upscale multiplier → scaled_width2 / scaled_height2."}),
                 "batch_size":      ("INT",   {"default": 1,    "min": 1,    "max": 64,     "step": 1}),
-                "seed":            ("INT",   {"default": 0,    "min": 0,    "max": MAX_SEED}),
-                "seed_mode":       (SEED_MODES, {"default": "fixed"}),
+                "seed":            ("INT",   {"default": 0,    "min": 0,    "max": MAX_SEED,
+                                              "control_after_generate": True,
+                                              "tooltip": "Output seed; control_after_generate sets fixed/increment/decrement/randomize."}),
                 "swap_dimensions": ("BOOLEAN", {"default": False,
                                                 "tooltip": "Swap width ↔ height (portrait ↔ landscape)."}),
             }
@@ -72,14 +71,8 @@ class ScaledResolution:
         "Emits an empty latent, replacing EmptyLatentImage."
     )
 
-    @classmethod
-    def IS_CHANGED(cls, seed_mode, **kwargs):
-        if seed_mode == "randomize":
-            return float("nan")
-        return False
-
     def execute(self, aspect_ratio, width, height,
-                prescale_factor, upscale_factor, upscale_factor2, batch_size, seed, seed_mode,
+                prescale_factor, upscale_factor, upscale_factor2, batch_size, seed,
                 swap_dimensions):
         preset = ASPECT_RATIO_PRESETS.get(aspect_ratio)
         if preset is None and aspect_ratio != "custom":
@@ -134,14 +127,7 @@ class ScaledResolution:
         if batch_size < 1:
             raise ValueError(f"[ScaledResolution] batch_size must be >= 1, got {batch_size}")
 
-        if seed_mode == "randomize":
-            out_seed = random.randint(0, MAX_SEED)
-        elif seed_mode == "fixed":
-            if not (0 <= seed <= MAX_SEED):
-                raise ValueError(f"[ScaledResolution] seed {seed} out of range [0, {MAX_SEED}].")
-            out_seed = seed
-        else:
-            raise ValueError(f"[ScaledResolution] Unknown seed_mode '{seed_mode}'. Valid: {SEED_MODES}")
+        out_seed = seed
 
         latent = torch.zeros([batch_size, 4, height // 8, width // 8], device=self.device)
 
